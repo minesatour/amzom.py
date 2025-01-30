@@ -1,4 +1,5 @@
 scapy
 cryptography
 netifaces
-pybluez
+bleak
+
